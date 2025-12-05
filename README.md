@@ -1,95 +1,141 @@
-# 🎬 Alan Movie — Next.js Project Documentation
+# 🎬 CinemaOS Stream
 
-Welcome to the official documentation for **Alan Movie**, a modern web application built using [Next.js](https://nextjs.org) — the React framework for production. Alan Movie is designed to deliver seamless movie browsing experiences, powered by API integrations (such as TMDb), beautiful UI/UX, and optimized performance.
+A modern streaming platform built with **Next.js 15**, featuring a sleek CinemaOS-inspired UI design. Browse movies, TV shows, and anime with a premium dark-themed interface.
+
+![Next.js](https://img.shields.io/badge/Next.js-15.3.1-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+
+## ✨ Features
+
+### 🏠 Homepage
+- **Hero Section** - Full-screen carousel with CinemaOS-style layout, stacked poster cards, and glassmorphism badges
+- **Top 10 Movies & TV Shows** - Ranked content grids with rating badges
+- **Streaming Providers** - Browse content by provider (Netflix, Disney+, Prime Video, etc.) with live API integration
+
+### 🎥 Watch Page
+- **Multi-source Streaming** - Switch between V1, V2, V3, and 4K sources
+- **Movie Details** - Runtime, genres, budget, production companies
+- **Similar Content** - Recommendations carousel
+- **Download Options** - Direct download and subtitle links
+
+### 📺 Content Pages
+- **Movies** - Browse and search movies
+- **TV Shows** - Season/episode navigation with accordion UI
+- **Anime** - Dedicated anime section
+- **Collections** - Curated movie collections
+
+### 🎨 Design
+- **Pure Black Theme** - Premium dark mode aesthetic
+- **Glassmorphism Effects** - Modern translucent UI elements
+- **Responsive Layout** - Optimized for all screen sizes
+- **Smooth Animations** - Fade transitions and hover effects
 
 ---
 
 ## 🚀 Getting Started
 
-To run this project locally, follow the steps below:
+### Prerequisites
+- Node.js 18+
+- npm, yarn, or pnpm
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/Alan-Alkalifa/AlanMovies.git
-cd alan-movie
-```
-
-### 2. Install Dependencies
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/ProfMilo/ProfMilo-Stream.git
+cd ProfMilo-Stream
+
+# Install dependencies
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
 
-### 3. Set Environment Variables
+### Environment Setup
 
-Create a `.env.local` file in the root directory with the following content:
+Create a `.env.local` file in the root directory:
 
 ```env
 NEXT_PUBLIC_TMDB_API_KEY=your_tmdb_api_key_here
 ```
 
-> Replace `your_tmdb_api_key_here` with your actual TMDb API key.
+> Get your free API key at [themoviedb.org](https://www.themoviedb.org/settings/api)
 
-### 4. Run the Development Server
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Now open [http://localhost:3000](http://localhost:3000) to see **Alan Movie** in action.
-
-## 🧩 Features
-
-- ✅ **Dynamic Routing** for movie detail pages (`/Movie/[id]`)
-- 🖼️ **Responsive Design** with Tailwind CSS
-- 📦 **API Integration** with [TMDb](https://www.themoviedb.org/)
-- ⚡ **Server-Side Rendering** for SEO-friendly content
-- 🗂️ **Modular Components** for better reusability and maintenance
-- 🌐 **Font Optimization** using `next/font` and [Geist](https://vercel.com/font)
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ---
 
-## 📚 Learn More
+## 📁 Project Structure
 
-To deepen your understanding of the stack used in this project:
+```
+├── app/
+│   ├── components/
+│   │   ├── feature/          # Feature components
+│   │   │   ├── HeroSection.tsx
+│   │   │   ├── StreamingProvidersSection.tsx
+│   │   │   ├── TopMoviesSection.tsx
+│   │   │   └── TopTvShowsSection.tsx
+│   │   ├── layout/           # Layout components
+│   │   │   └── Navbar.tsx
+│   │   └── ui/               # Reusable UI components
+│   ├── movie/[id]/           # Movie detail page
+│   ├── tv/[id]/              # TV show detail page
+│   ├── Watch/[id]/           # Watch page with streaming
+│   ├── anime/                # Anime section
+│   ├── collection/           # Collections section
+│   └── page.tsx              # Homepage
+├── public/                   # Static assets
+└── tailwind.config.ts        # Tailwind configuration
+```
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Learn Next.js](https://nextjs.org/learn)
-- [TMDb API Documentation](https://developer.themoviedb.org/docs)
-- [Tailwind CSS Docs](https://tailwindcss.com/docs)
+---
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|------------|---------|
+| **Next.js 15** | React framework with App Router |
+| **TypeScript** | Type safety |
+| **Tailwind CSS** | Utility-first styling |
+| **Turbopack** | Fast development bundler |
+| **TMDB API** | Movie & TV metadata |
+| **Lucide React** | Icon library |
 
 ---
 
 ## 📦 Deployment
 
-We recommend deploying on [Vercel](https://vercel.com/) — the creators of Next.js.
+### Deploy on Vercel
 
-To deploy:
-
-1. Push your project to GitHub.
-2. Go to [vercel.com/new](https://vercel.com/new) and import your GitHub repo.
-3. Add your `.env` variables in the Vercel dashboard.
-4. Click **Deploy**.
+1. Push your code to GitHub
+2. Import your repo at [vercel.com/new](https://vercel.com/new)
+3. Add `NEXT_PUBLIC_TMDB_API_KEY` in Environment Variables
+4. Click **Deploy**
 
 ---
 
-## 👨‍💻 Author
+## 🤝 Contributing
 
-**Alan Movie** is developed and maintained by Alan Alkalifa.
-
-For feedback or feature requests, please open an issue or contribute via pull request.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-Would you like this documentation exported as a Markdown file or added as a README for your GitHub repo?
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## ⚠️ Disclaimer
+
+CinemaOS Stream is a content aggregator and does not host any media files. All content is sourced from third-party providers. For copyright concerns, please contact the respective content providers.
+
+---
+
+**Built with ❤️ by [ProfMilo](https://github.com/ProfMilo)**
