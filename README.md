@@ -1,6 +1,6 @@
-# 🎬 CinemaOS Stream
+# 🎬 ProfMilo Stream
 
-A modern streaming platform built with **Next.js 15**, featuring a sleek CinemaOS-inspired UI design. Browse movies, TV shows, and anime with a premium dark-themed interface.
+A modern streaming platform built with **Next.js 15**, featuring a sleek dark-themed UI design. Browse movies, TV shows, and anime with a premium interface.
 
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.1-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)
@@ -10,7 +10,7 @@ A modern streaming platform built with **Next.js 15**, featuring a sleek CinemaO
 ## ✨ Features
 
 ### 🏠 Homepage
-- **Hero Section** - Full-screen carousel with CinemaOS-style layout, stacked poster cards, and glassmorphism badges
+- **Hero Section** - Full-screen carousel with stacked poster cards and glassmorphism badges
 - **Top 10 Movies & TV Shows** - Ranked content grids with rating badges
 - **Streaming Providers** - Browse content by provider (Netflix, Disney+, Prime Video, etc.) with live API integration
 
@@ -134,7 +134,7 @@ This project is licensed under the MIT License.
 
 ## ⚠️ Disclaimer
 
-CinemaOS Stream is a content aggregator and does not host any media files. All content is sourced from third-party providers. For copyright concerns, please contact the respective content providers.
+ProfMilo Stream is a content aggregator and does not host any media files. All content is sourced from third-party providers. For copyright concerns, please contact the respective content providers.
 
 ---
 

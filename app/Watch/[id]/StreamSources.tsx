@@ -12,10 +12,10 @@ type Props = {
 };
 
 const streamSources = [
-    { id: 'v1', label: 'CinemaOS V1', quality: 'Auto' },
-    { id: 'v2', label: 'CinemaOS V2', quality: 'Auto' },
-    { id: 'v3', label: 'CinemaOS V3', quality: 'Auto' },
-    { id: '4k', label: 'CinemaOS 4K', quality: '4K' },
+    { id: 'v1', label: 'ProfMilo V1', quality: 'Auto' },
+    { id: 'v2', label: 'ProfMilo V2', quality: 'Auto' },
+    { id: 'v3', label: 'ProfMilo V3', quality: 'Auto' },
+    { id: '4k', label: 'ProfMilo 4K', quality: '4K' },
 ];
 
 export default function StreamSources({ movieId, movieTitle, isTV, season, episode, onSourceChange }: Props) {
@@ -25,26 +25,6 @@ export default function StreamSources({ movieId, movieTitle, isTV, season, episo
     const handleSourceChange = (sourceId: string) => {
         setActiveSource(sourceId);
         onSourceChange?.(sourceId);
-    };
-
-    const getEmbedUrl = (source: string) => {
-        if (isTV && season && episode) {
-            switch (source) {
-                case 'v1': return `https://vidsrc.icu/embed/tv/${movieId}/${season}/${episode}`;
-                case 'v2': return `https://vidsrc.xyz/embed/tv/${movieId}/${season}/${episode}`;
-                case 'v3': return `https://vidsrc.to/embed/tv/${movieId}/${season}/${episode}`;
-                case '4k': return `https://vidsrc.pro/embed/tv/${movieId}/${season}/${episode}`;
-                default: return `https://vidsrc.icu/embed/tv/${movieId}/${season}/${episode}`;
-            }
-        } else {
-            switch (source) {
-                case 'v1': return `https://vidsrc.icu/embed/movie/${movieId}`;
-                case 'v2': return `https://vidsrc.xyz/embed/movie/${movieId}`;
-                case 'v3': return `https://vidsrc.to/embed/movie/${movieId}`;
-                case '4k': return `https://vidsrc.pro/embed/movie/${movieId}`;
-                default: return `https://vidsrc.icu/embed/movie/${movieId}`;
-            }
-        }
     };
 
     const currentSource = streamSources.find(s => s.id === activeSource);

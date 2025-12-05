@@ -162,11 +162,11 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
           {/* Left Column - Movie Info */}
           <div className={`flex flex-col justify-center space-y-4 md:mx-12 lg:col-span-7 lg:space-y-6 transition-all duration-700 ${isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
             }`}>
-            {/* CinemaOS + Media Type Badge */}
+            {/* ProfMilo + Media Type Badge */}
             <div className="flex items-center gap-1.5 md:gap-2 lg:gap-3">
               <div className="flex items-center gap-1 md:gap-1.5 lg:gap-2">
                 <div className="inline-flex items-center rounded-md border border-transparent shadow hover:bg-primary/80 bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground md:px-2 md:py-1 md:text-xs lg:px-3">
-                  CinemaOS
+                  ProfMilo
                 </div>
                 <div className="inline-flex items-center rounded-md border font-semibold border-white/40 bg-white/10 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm md:px-2 md:py-1 md:text-xs lg:text-xs">
                   {mediaType}

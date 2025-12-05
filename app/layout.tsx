@@ -10,7 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "CinemaOS",
+  title: "ProfMilo Stream",
   description: "Beautifully designed website where you can watch anime, drama, movies and read mangas for free. Built with Next.JS and shadcn/ui.",
 };
 
