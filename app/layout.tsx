@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${plusJakartaSans.variable} antialiased bg-background`}>
         <Navbar />
-        <main className="pt-16">
+        <main className="pt-12">
           {children}
         </main>
       </body>

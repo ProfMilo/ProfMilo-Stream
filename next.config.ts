@@ -1,14 +1,33 @@
-// next.config.js
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
   typescript: {
-    // ❗️Abaikan error TypeScript saat build (tidak untuk production serius)
+    // Ignore TypeScript errors during build (not recommended for production)
     ignoreBuildErrors: true,
   },
   eslint: {
-    // ❗️Abaikan error ESLint saat build
+    // Ignore ESLint errors during build
     ignoreDuringBuilds: true,
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'image.tmdb.org',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.icons8.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.paramountplus.com',
+        pathname: '/**',
+      },
+    ],
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

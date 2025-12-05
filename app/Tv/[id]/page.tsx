@@ -67,7 +67,7 @@ export default async function TvDetail({ params }: Params) {
           {/* Overview */}
           <p className="text-gray-300 leading-relaxed mb-6">{tv.overview}</p>
 
-          <Link href={`/Watch/${id}`}>
+          <Link href={`/Watch/${id}?season=1&episode=1`}>
             <button className="bg-red-600 hover:bg-red-700 transition px-6 py-3 rounded-full shadow text-white font-semibold w-fit">
               ▶️ Watch Now
             </button>

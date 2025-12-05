@@ -1,67 +1,78 @@
 'use client';
 
 import Link from 'next/link';
-import { Play, Info, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
+import { Play, Info, Star, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface HeroSectionProps {
   featuredMovies: Array<{
     id: number;
-    title: string;
+    title?: string;
+    name?: string;
     original_title?: string;
     overview: string;
     poster_path: string;
     backdrop_path: string;
     vote_average: number;
-    release_date: string;
+    release_date?: string;
+    first_air_date?: string;
     genre_ids: number[];
     media_type: 'movie' | 'tv';
   }>;
 }
 
+const genreMap: { [key: number]: string } = {
+  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
+  80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
+  14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
+  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV Movie',
+  53: 'Thriller', 10752: 'War', 37: 'Western', 10759: 'Action & Adventure',
+  10762: 'Kids', 10763: 'News', 10764: 'Reality', 10765: 'Sci-Fi & Fantasy',
+  10766: 'Soap', 10767: 'Talk', 10768: 'War & Politics'
+};
+
 export default function HeroSection({ featuredMovies }: HeroSectionProps) {
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const currentMovie = featuredMovies[currentMovieIndex];
-  
-  const title = currentMovie.title || currentMovie.original_title;
-  const rating = currentMovie.vote_average?.toFixed(1) || 'N/A';
-  const releaseDate = new Date(currentMovie.release_date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
 
-  // Initial load animation - ensure it works for both first visit and refresh
+  if (!featuredMovies || featuredMovies.length === 0) {
+    return null;
+  }
+
+  const currentMovie = featuredMovies[currentMovieIndex];
+  const nextMovie = featuredMovies[(currentMovieIndex + 1) % featuredMovies.length];
+  if (!currentMovie) return null;
+
+  const title = currentMovie.title || currentMovie.name || currentMovie.original_title || '';
+  const rating = currentMovie.vote_average?.toFixed(1) || 'N/A';
+  const releaseDate = currentMovie.release_date || currentMovie.first_air_date;
+  const year = releaseDate ? new Date(releaseDate).getFullYear() : '';
+  const mediaType = currentMovie.media_type === 'tv' ? 'SERIES' : 'FILM';
+
   useEffect(() => {
-    // Force initial load state to true on mount
     setIsInitialLoad(true);
-    
     const timer = setTimeout(() => {
       setIsInitialLoad(false);
-    }, 800); // Show grid pattern for 800ms before transitioning to content
-
+    }, 800);
     return () => clearTimeout(timer);
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
-  // Auto-switch between movies every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isTransitioning && !isInitialLoad) {
         setIsTransitioning(true);
         setTimeout(() => {
-          setCurrentMovieIndex((prevIndex) => 
+          setCurrentMovieIndex((prevIndex) =>
             (prevIndex + 1) % featuredMovies.length
           );
-          // Remove the delay for fade-in since it now happens simultaneously
-        }, 1000); // Wait for fade-out animation to complete
+        }, 500);
         setTimeout(() => {
           setIsTransitioning(false);
-        }, 1000); // Set transitioning to false after fade-out completes
+        }, 1000);
       }
-    }, 10000); // 10 seconds
-
+    }, 10000);
     return () => clearInterval(interval);
   }, [featuredMovies.length, isTransitioning, isInitialLoad]);
 
@@ -70,8 +81,7 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
       setIsTransitioning(true);
       setTimeout(() => {
         setCurrentMovieIndex(index);
-        // Remove the delay for fade-in since it now happens simultaneously
-      }, 1000);
+      }, 500);
       setTimeout(() => {
         setIsTransitioning(false);
       }, 1000);
@@ -93,27 +103,23 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section id="hero" className="relative h-screen w-full overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
           src={`https://image.tmdb.org/t/p/original${currentMovie.backdrop_path}`}
           alt={title}
-          className={`w-full h-full object-cover transition-all duration-1000 ease-in-out ${
-            isTransitioning ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-          } ${isInitialLoad ? 'opacity-0 scale-105' : ''}`}
+          className={`w-full h-full object-cover transition-all duration-700 ease-out ${isTransitioning ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
+            } ${isInitialLoad ? 'opacity-0' : ''}`}
         />
-        <div className={`absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50 transition-opacity duration-1000 ease-in-out ${
-          isInitialLoad ? 'opacity-0' : 'opacity-100'
-        }`} />
-        
-        {/* Grid pattern background - shows first, then transitions to movie content */}
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+
+        {/* Grid pattern for loading */}
         {(isTransitioning || isInitialLoad) && (
-          <div className={`absolute inset-0 bg-black transition-opacity duration-1000 ease-in-out ${
-            isInitialLoad ? 'opacity-100' : 'opacity-100'
-          }`}>
-            {/* Grid pattern overlay */}
-            <div 
+          <div className="absolute inset-0 bg-black transition-opacity duration-500">
+            <div
               className="absolute inset-0 opacity-20"
               style={{
                 backgroundImage: `
@@ -128,156 +134,142 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
       </div>
 
       {/* Navigation Arrows */}
-      <div className="absolute inset-0 z-20 flex items-center justify-between pointer-events-none">
-        {/* Left Arrow */}
+      <div className="absolute inset-y-0 left-0 z-20 flex items-center">
         <button
           onClick={handlePreviousMovie}
-          className={`ml-8 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ease-in-out pointer-events-auto ${
-            isInitialLoad ? 'opacity-0' : 'opacity-100'
-          }`}
+          className={`ml-4 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
+            }`}
           disabled={isTransitioning || isInitialLoad}
         >
-          <ChevronLeft className="w-8 h-8" />
+          <ChevronLeft className="w-6 h-6" />
         </button>
-
-        {/* Right Arrow */}
+      </div>
+      <div className="absolute inset-y-0 right-0 z-20 flex items-center">
         <button
           onClick={handleNextMovie}
-          className={`mr-8 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ease-in-out pointer-events-auto ${
-            isInitialLoad ? 'opacity-0' : 'opacity-100'
-          }`}
+          className={`mr-4 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
+            }`}
           disabled={isTransitioning || isInitialLoad}
         >
-          <ChevronRight className="w-8 h-8" />
+          <ChevronRight className="w-6 h-6" />
         </button>
       </div>
 
-      <div className={`relative z-10 container mx-auto px-4 max-w-7xl transition-opacity duration-1000 ease-in-out ${
-        isInitialLoad ? 'opacity-0' : 'opacity-100'
-      }`}>
-        <div className="flex flex-col lg:flex-row items-start justify-start gap-12 pt-20">
-          {/* Left: Movie Poster */}
-          <div className="flex justify-center lg:justify-start">
-            <div className="relative group">
-              <img
-                src={`https://image.tmdb.org/t/p/w500${currentMovie.poster_path}`}
-                alt={title}
-                className={`w-80 h-auto rounded-lg shadow-2xl group-hover:scale-105 transition-all duration-1000 ease-in-out ${
-                  isTransitioning ? 'opacity-0 translate-y-3' : 'opacity-100 translate-y-0'
-                } ${isInitialLoad ? 'opacity-0 translate-y-3' : ''}`}
-              />
-            </div>
-          </div>
-
-          {/* Right: Movie Details */}
-          <div className="text-white space-y-8 max-w-2xl">
-            {/* Top Tags */}
-            <div className={`flex items-center gap-3 mb-6 transition-all duration-1000 ease-in-out ${
-              isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
-            } ${isInitialLoad ? 'opacity-0 translate-x-4' : ''}`}>
-              <span className="px-4 py-2 bg-black/50 backdrop-blur-sm border border-white text-white text-sm font-medium rounded-full">
-                Movie
-              </span>
+      {/* Main Content */}
+      <div className={`relative z-10 flex h-full items-end pb-16 lg:items-center lg:pb-0 transition-opacity duration-700 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
+        }`}>
+        <div className="mx-auto grid w-full grid-cols-1 gap-8 px-4 py-20 md:px-6 lg:grid-cols-12 lg:gap-12 lg:px-12">
+          {/* Left Column - Movie Info */}
+          <div className={`flex flex-col justify-center space-y-4 md:mx-12 lg:col-span-7 lg:space-y-6 transition-all duration-700 ${isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
+            }`}>
+            {/* CinemaOS + Media Type Badge */}
+            <div className="flex items-center gap-1.5 md:gap-2 lg:gap-3">
+              <div className="flex items-center gap-1 md:gap-1.5 lg:gap-2">
+                <div className="inline-flex items-center rounded-md border border-transparent shadow hover:bg-primary/80 bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground md:px-2 md:py-1 md:text-xs lg:px-3">
+                  CinemaOS
+                </div>
+                <div className="inline-flex items-center rounded-md border font-semibold border-white/40 bg-white/10 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm md:px-2 md:py-1 md:text-xs lg:text-xs">
+                  {mediaType}
+                </div>
+              </div>
             </div>
 
-            {/* Movie Title */}
-            <h1 className={`text-5xl lg:text-6xl font-black leading-[0.85] tracking-tight text-white antialiased font-sans transition-all duration-1000 ease-in-out ${
-              isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
-            } ${isInitialLoad ? 'opacity-0 translate-x-4' : ''}`}
-            style={{
-              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-              WebkitFontSmoothing: 'antialiased',
-              MozOsxFontSmoothing: 'grayscale'
-            }}>
+            {/* Movie Title (large text) */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-2xl">
               {title}
             </h1>
-            
-            {/* Rating, Release Date, and Genres */}
-            <div className={`flex items-center gap-4 mb-6 transition-all duration-1000 ease-in-out ${
-              isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
-            } ${isInitialLoad ? 'opacity-0 translate-x-4' : ''}`}>
-              {/* Rating with yellow star and border */}
-              <div className="flex items-center gap-2 bg-yellow-400/20 backdrop-blur-sm border border-yellow-400/40 rounded-full px-4 py-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="font-bold text-yellow-400">{rating}</span>
+
+            {/* Rating, Year, Genre Badges */}
+            <div className="flex flex-wrap items-center gap-1.5 md:gap-2 lg:gap-3">
+              {/* Rating Badge */}
+              <div className="relative flex items-center gap-1 overflow-hidden rounded-lg bg-gradient-to-br from-gray-900/90 to-gray-800/90 px-1.5 py-0.5 shadow-lg backdrop-blur-md md:gap-1.5 md:px-2 md:py-1 lg:px-3 lg:py-1.5">
+                <span className="relative z-10 text-xs text-yellow-400 md:text-sm lg:text-base">★</span>
+                <span className="relative z-10 text-[10px] font-bold text-white md:text-xs lg:text-sm">{rating}/10</span>
               </div>
-              {/* Release Date */}
-              <div className="flex items-center gap-2 text-white bg-black/50 backdrop-blur-sm border border-white rounded-full px-4 py-2">
-                <span className="text-sm">{releaseDate}</span>
+
+              {/* Year Badge */}
+              <div className="relative flex items-center gap-1 overflow-hidden rounded-lg bg-white/10 px-1.5 py-0.5 shadow-lg backdrop-blur-md border border-white/20 md:gap-1.5 md:px-2 md:py-1 lg:px-3">
+                <Calendar className="relative z-10 h-3 w-3 text-white md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+                <span className="relative z-10 text-[10px] font-semibold text-white md:text-xs lg:text-sm">{year}</span>
               </div>
-              {/* Genre Tags */}
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 bg-white/30 backdrop-blur-sm border border-white/60 text-white text-xs font-medium rounded-full">
-                  Sci-Fi
-                </span>
-                <span className="px-3 py-1.5 bg-white/30 backdrop-blur-sm border border-white/60 text-white text-xs font-medium rounded-full">
-                  Adventure
-                </span>
-                <span className="px-3 py-1.5 bg-white/30 backdrop-blur-sm border border-white/60 text-white text-xs font-medium rounded-full">
-                  Action
-                </span>
-              </div>
+
+              {/* Genre Badges */}
+              {currentMovie.genre_ids?.slice(0, 2).map((genreId) => (
+                <div
+                  key={genreId}
+                  className="inline-flex items-center rounded-md border border-transparent relative overflow-hidden bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold shadow-lg backdrop-blur-md text-white md:px-2 md:py-1 md:text-xs lg:px-3 lg:text-sm"
+                >
+                  <span className="relative z-10">{genreMap[genreId] || 'Genre'}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Synopsis */}
-            <p className={`text-lg text-gray-300 leading-relaxed mb-8 transition-all duration-1000 ease-in-out ${
-              isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
-            } ${isInitialLoad ? 'opacity-0 translate-x-4' : ''}`}>
+            {/* Overview/Description */}
+            <p className="max-w-2xl text-xs leading-relaxed text-white/90 drop-shadow-lg md:text-sm lg:text-base xl:text-lg line-clamp-3">
               {currentMovie.overview}
             </p>
 
             {/* Action Buttons */}
-            <div className={`flex flex-wrap gap-4 transition-all duration-1000 ease-in-out ${
-              isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
-            } ${isInitialLoad ? 'opacity-0 translate-x-4' : ''}`}>
+            <div className="flex flex-wrap items-center gap-1.5 md:gap-2 lg:gap-3">
               <Link
-                href={`/Watch/${currentMovie.id}`}
-                className="inline-flex items-center gap-3 bg-white text-black hover:bg-gray-100 hover:scale-110 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 ease-in-out"
+                href={currentMovie.media_type === 'tv'
+                  ? `/Watch/${currentMovie.id}?season=1&episode=1`
+                  : `/Watch/${currentMovie.id}`}
+                className="inline-flex items-center justify-center whitespace-nowrap h-8 gap-1.5 rounded-md bg-white px-4 text-xs font-bold text-black hover:bg-white/90 md:h-10 md:gap-2 md:px-6 md:text-sm lg:h-12 lg:px-8 lg:text-base transition-all"
               >
-                <Play className="w-6 h-6 text-black fill-black" />
+                <Play className="h-3 w-3 fill-current md:h-4 md:w-4 lg:h-5 lg:w-5" />
                 Watch Now
               </Link>
-              
               <Link
                 href={`/${currentMovie.media_type}/${currentMovie.id}`}
-                className="inline-flex items-center gap-3 bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all duration-300 ease-in-out border border-white"
+                className="inline-flex items-center justify-center whitespace-nowrap h-8 gap-1.5 rounded-md bg-white/20 px-4 text-xs font-bold text-white backdrop-blur-sm hover:bg-white/30 md:h-10 md:gap-2 md:px-6 md:text-sm lg:h-12 lg:px-8 lg:text-base transition-all"
               >
-                <Info className="w-6 h-6" />
-                Details
+                <Info className="h-3 w-3 md:h-4 md:w-4 lg:h-5 lg:w-5" />
+                More Info
               </Link>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Carousel Indicator - Movie Posters */}
-        <div className={`mt-16 flex justify-center transition-opacity duration-1000 ease-in-out ${
-          isInitialLoad ? 'opacity-0' : 'opacity-100'
-        }`}>
-          <div className="flex space-x-4">
-            {featuredMovies.map((movie, index) => (
+          {/* Right Column - Stacked Poster Cards */}
+          <div className="hidden lg:col-span-5 lg:flex lg:items-center lg:justify-end">
+            <div className="relative mr-8" style={{ width: '320px', height: '400px' }}>
+              {/* Current Movie Poster */}
               <div
-                key={movie.id}
-                onClick={() => handleMovieSelect(index)}
-                className={`relative cursor-pointer transition-all duration-600 ease-in-out ${
-                  index === currentMovieIndex 
-                    ? 'scale-110' 
-                    : 'scale-100 hover:scale-105'
-                }`}
-              >
-                <img
-                  src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
-                  alt={movie.title}
-                  className={`w-20 h-28 object-cover rounded-lg shadow-lg transition-all duration-400 ${
-                    index === currentMovieIndex 
-                      ? 'ring-2 ring-white ring-offset-0' 
-                      : ''
+                className={`absolute overflow-hidden rounded-lg border-2 border-white/20 shadow-2xl transition-all duration-500 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
                   }`}
-                />
-                {index === currentMovieIndex && (
-                  <div className="absolute inset-0 bg-white/20 rounded-lg pointer-events-none transition-opacity duration-400" />
+                style={{ width: '280px', height: '400px', zIndex: 2, top: 0, left: 0 }}
+              >
+                {currentMovie.poster_path && (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${currentMovie.poster_path}`}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
-            ))}
+
+              {/* Next Movie Poster (behind) */}
+              <div
+                className="absolute overflow-hidden rounded-lg border-2 border-white/10 shadow-xl transition-all duration-500 ease-out"
+                style={{
+                  width: '280px',
+                  height: '400px',
+                  zIndex: 1,
+                  top: '20px',
+                  left: '0px',
+                  transform: 'translateX(32px) scale(0.9)',
+                  opacity: 0.7
+                }}
+              >
+                {nextMovie?.poster_path && (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${nextMovie.poster_path}`}
+                    alt={nextMovie.title || nextMovie.name || ''}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
