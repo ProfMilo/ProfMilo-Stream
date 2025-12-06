@@ -1,6 +1,5 @@
 import HeroSection from "../components/feature/HeroSection";
 import TvShowsGrid from "../components/feature/TvShowsGrid";
-import Footer from "../components/layout/Footer";
 
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -25,6 +24,21 @@ async function getPopularTvShows() {
     }
 }
 
+async function getTvImages(id: number) {
+    try {
+        const res = await fetch(
+            `${BASE_URL}/tv/${id}/images?api_key=${API_KEY}`,
+            { next: { revalidate: 3600 } }
+        );
+        if (!res.ok) return null;
+        const data = await res.json();
+        const englishLogo = data.logos?.find((l: any) => l.iso_639_1 === 'en');
+        return englishLogo?.file_path || data.logos?.[0]?.file_path || null;
+    } catch (error) {
+        return null;
+    }
+}
+
 export default async function TvPage() {
     let trendingData = { results: [] };
     let popularData = { results: [] };
@@ -38,11 +52,17 @@ export default async function TvPage() {
         console.error('Failed to fetch TV page data', error);
     }
 
-    // Take the first trending show as featured
-    const featuredTvShow = (trendingData.results || []).slice(0, 1).map((t: any) => ({
-        ...t,
-        media_type: 'tv'
-    }));
+    // Take the first popular show as featured and fetch its logo
+    const firstShow = (popularData.results || [])[0];
+    let featuredTvShow: any[] = [];
+    if (firstShow) {
+        const logo_path = await getTvImages(firstShow.id);
+        featuredTvShow = [{
+            ...firstShow,
+            media_type: 'tv' as const,
+            logo_path
+        }];
+    }
 
     const tvShows = (popularData.results || []).map((t: any) => ({
         ...t,
@@ -51,9 +71,8 @@ export default async function TvPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <HeroSection featuredMovies={featuredTvShow} />
+            <HeroSection featuredMovies={featuredTvShow} showArrows={false} showPosters={false} enableAutoTransition={false} />
             <TvShowsGrid tvShows={tvShows} />
-            <Footer />
         </div>
     );
 }

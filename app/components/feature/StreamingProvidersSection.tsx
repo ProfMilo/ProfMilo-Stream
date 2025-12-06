@@ -108,8 +108,8 @@ export default function StreamingProvidersSection() {
                             type="button"
                             onClick={() => setActiveTab('movies')}
                             className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all sm:text-sm ${activeTab === 'movies'
-                                    ? 'bg-background text-foreground shadow'
-                                    : 'hover:bg-background/50'
+                                ? 'bg-background text-foreground shadow'
+                                : 'hover:bg-background/50'
                                 }`}
                         >
                             Movies
@@ -118,8 +118,8 @@ export default function StreamingProvidersSection() {
                             type="button"
                             onClick={() => setActiveTab('tv')}
                             className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all sm:text-sm ${activeTab === 'tv'
-                                    ? 'bg-background text-foreground shadow'
-                                    : 'hover:bg-background/50'
+                                ? 'bg-background text-foreground shadow'
+                                : 'hover:bg-background/50'
                                 }`}
                         >
                             TV Shows
@@ -136,8 +136,8 @@ export default function StreamingProvidersSection() {
                             key={provider.name}
                             onClick={() => setSelectedProvider(provider)}
                             className={`group flex h-12 cursor-pointer flex-col items-center justify-center rounded-xl border transition-all duration-300 md:h-24 ${selectedProvider.name === provider.name
-                                    ? 'border-primary bg-primary/10 shadow-lg'
-                                    : 'border-white/5 bg-black/10 hover:border-primary/50 hover:bg-black/20 hover:shadow-md'
+                                ? 'border-primary bg-primary/10 shadow-lg'
+                                : 'border-white/5 bg-black/10 hover:border-primary/50 hover:bg-black/20 hover:shadow-md'
                                 }`}
                         >
                             <div className="relative flex h-8 w-8 items-center justify-center md:h-14 md:w-14">
@@ -209,10 +209,10 @@ export default function StreamingProvidersSection() {
                                     </div>
 
                                     {/* Rating badge */}
-                                    <div className="absolute right-2 top-2">
-                                        <div className="inline-flex items-center rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground shadow">
-                                            <Star className="mr-1 h-3 w-3 fill-current" />
-                                            {item.vote_average.toFixed(1)}
+                                    <div className="absolute right-2 top-2 z-10">
+                                        <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md">
+                                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                            <span className="text-white text-xs font-bold">{item.vote_average.toFixed(1)}</span>
                                         </div>
                                     </div>
                                 </div>

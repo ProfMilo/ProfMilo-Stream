@@ -36,6 +36,22 @@ async function getTopRatedTvShows() {
   }
 }
 
+async function getMovieImages(id: number, mediaType: 'movie' | 'tv') {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/${mediaType}/${id}/images?api_key=${API_KEY}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    // Prefer English logos, fallback to first available
+    const englishLogo = data.logos?.find((l: any) => l.iso_639_1 === 'en');
+    return englishLogo?.file_path || data.logos?.[0]?.file_path || null;
+  } catch (error) {
+    return null;
+  }
+}
+
 export default async function Home() {
   let trendingData = { results: [] };
   let topMoviesData = { results: [] };
@@ -52,11 +68,20 @@ export default async function Home() {
     // Continue rendering with empty data
   }
 
-  // Ensure we have data and map it correctly
-  const featuredMovies = (trendingData.results || []).slice(0, 6).map((m: any) => ({
-    ...m,
-    media_type: 'movie'
-  }));
+  // Get featured movies and fetch their logos
+  const trendingMovies = (trendingData.results || []).slice(0, 6);
+  const featuredMoviesWithLogos = await Promise.all(
+    trendingMovies.map(async (m: any) => {
+      const logo_path = await getMovieImages(m.id, 'movie');
+      return {
+        ...m,
+        media_type: 'movie' as const,
+        logo_path
+      };
+    })
+  );
+
+  const featuredMovies = featuredMoviesWithLogos;
 
   const topMovies = (topMoviesData.results || []).map((m: any) => ({
     ...m,

@@ -1,255 +1,272 @@
 import axios from "axios";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Star } from "lucide-react";
 import VideoPlayerClient from "./VideoPlayerClient";
-import StreamSources from "./StreamSources";
-import MovieDetails from "./MovieDetails";
-import SimilarMovies from "./SimilarMovies";
+import TVWatchClient from "./TVWatchClient";
 
-interface Props {
-  params: Promise<{
-    id: string;
-  }>;
-  searchParams: Promise<{
-    season?: string;
-    episode?: string;
-  }>;
+const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const BASE_URL = 'https://api.themoviedb.org/3';
+
+interface WatchPageProps {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-interface Genre {
-  id: number;
-  name: string;
-}
+export default async function WatchPage({ params, searchParams }: WatchPageProps) {
+    const { id } = await params;
+    const resolvedSearchParams = await searchParams;
+    const season = resolvedSearchParams.season as string | undefined;
+    const episode = resolvedSearchParams.episode as string | undefined;
 
-interface MovieData {
-  id: number;
-  title?: string;
-  name?: string;
-  overview: string;
-  poster_path?: string;
-  backdrop_path?: string;
-  release_date?: string;
-  first_air_date?: string;
-  vote_average: number;
-  runtime?: number;
-  episode_run_time?: number[];
-  genres: Genre[];
-  tagline?: string;
-  status?: string;
-  budget?: number;
-  revenue?: number;
-  original_language?: string;
-  production_companies?: Array<{ id: number; name: string; logo_path?: string }>;
-  production_countries?: Array<{ iso_3166_1: string; name: string }>;
-  spoken_languages?: Array<{ english_name: string; iso_639_1: string }>;
-}
+    const isTV = !!(season && episode);
 
-interface SimilarItem {
-  id: number;
-  title?: string;
-  name?: string;
-  poster_path?: string;
-  release_date?: string;
-  first_air_date?: string;
-}
+    // Fetch media details
+    let mediaData: any = null;
+    let similarData: any = { results: [] };
+    let episodeData: any = null;
+    let seasonData: any = null;
 
-const languageMap: Record<string, string> = {
-  en: 'English',
-  es: 'Spanish',
-  fr: 'French',
-  de: 'German',
-  it: 'Italian',
-  pt: 'Portuguese',
-  ja: 'Japanese',
-  ko: 'Korean',
-  zh: 'Chinese',
-  ru: 'Russian',
-  ar: 'Arabic',
-  hi: 'Hindi',
-};
+    try {
+        if (isTV) {
+            // Fetch TV show details, season details, and similar shows
+            const [tvRes, seasonRes, similarRes] = await Promise.all([
+                axios.get(`${BASE_URL}/tv/${id}?api_key=${API_KEY}`),
+                axios.get(`${BASE_URL}/tv/${id}/season/${season}?api_key=${API_KEY}`),
+                axios.get(`${BASE_URL}/tv/${id}/similar?api_key=${API_KEY}`)
+            ]);
+            mediaData = tvRes.data;
+            seasonData = seasonRes.data;
+            similarData = similarRes.data;
 
-export default async function WatchMovie(props: Props) {
-  const params = await props.params;
-  const { id } = params;
-  const searchParams = await props.searchParams;
-  const season = searchParams?.season;
-  const episode = searchParams?.episode;
-  const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-
-  const isTV = !!season && !!episode;
-  const mediaType = isTV ? 'tv' : 'movie';
-
-  let data: MovieData | null = null;
-  let similarItems: SimilarItem[] = [];
-  let embedUrl = "";
-  let backUrl = "";
-
-  try {
-    if (isTV) {
-      embedUrl = `https://vidsrc.icu/embed/tv/${id}/${season}/${episode}`;
-      backUrl = `/tv/${id}`;
-
-      const [tvRes, similarRes] = await Promise.all([
-        axios.get(`https://api.themoviedb.org/3/tv/${id}?api_key=${API_KEY}`),
-        axios.get(`https://api.themoviedb.org/3/tv/${id}/similar?api_key=${API_KEY}`)
-      ]);
-
-      data = tvRes.data;
-      similarItems = similarRes.data.results || [];
-    } else {
-      embedUrl = `https://vidsrc.icu/embed/movie/${id}`;
-      backUrl = `/movie/${id}`;
-
-      const [movieRes, similarRes] = await Promise.all([
-        axios.get(`https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}`),
-        axios.get(`https://api.themoviedb.org/3/movie/${id}/similar?api_key=${API_KEY}`)
-      ]);
-
-      data = movieRes.data;
-      similarItems = similarRes.data.results || [];
+            // Find current episode
+            episodeData = seasonData.episodes?.find((ep: any) => ep.episode_number === parseInt(episode || '1'));
+        } else {
+            // Fetch movie details
+            const [movieRes, similarRes] = await Promise.all([
+                axios.get(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`),
+                axios.get(`${BASE_URL}/movie/${id}/similar?api_key=${API_KEY}`)
+            ]);
+            mediaData = movieRes.data;
+            similarData = similarRes.data;
+        }
+    } catch (error) {
+        console.error('Failed to fetch media data:', error);
     }
-  } catch (error) {
-    notFound();
-  }
 
-  if (!data) {
-    notFound();
-  }
+    const title = mediaData?.title || mediaData?.name || 'Unknown';
+    const year = mediaData?.release_date?.substring(0, 4) || mediaData?.first_air_date?.substring(0, 4) || '';
 
-  const title = isTV ? `${data.name} - S${season} E${episode}` : data.title || '';
-  const displayTitle = data.title || data.name || '';
-  const year = (data.release_date || data.first_air_date)?.slice(0, 4);
-  const runtime = data.runtime || (data.episode_run_time?.[0] || 0);
-  const language = languageMap[data.original_language || 'en'] || data.original_language;
+    // For TV shows, use the new TV Watch layout
+    if (isTV && mediaData) {
+        return (
+            <TVWatchClient
+                tvId={id}
+                tvData={mediaData}
+                seasonData={seasonData}
+                episodeData={episodeData}
+                currentSeason={parseInt(season || '1')}
+                currentEpisode={parseInt(episode || '1')}
+                similarShows={similarData.results?.slice(0, 12) || []}
+            />
+        );
+    }
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Video Player */}
-      <div className="w-full">
-        <VideoPlayerClient
-          embedUrl={embedUrl}
-          title={title}
-          year={year}
-          rating={data.vote_average}
-          runtime={runtime}
-          overview={data.overview}
-        />
-      </div>
+    // Movie watch layout
+    const embedUrl = `https://vidsrc.cc/v2/embed/movie/${id}`;
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column - Poster & Info */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Poster */}
-            <div className="relative aspect-[2/3] w-full max-w-[280px] mx-auto lg:mx-0 overflow-hidden rounded-xl shadow-xl">
-              {data.poster_path ? (
-                <Image
-                  src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
-                  alt={displayTitle}
-                  fill
-                  className="object-cover"
-                  priority
+    return (
+        <div className="min-h-screen bg-background">
+            {/* Video Player Section */}
+            <div className="w-full">
+                <VideoPlayerClient
+                    embedUrl={embedUrl}
+                    title={title}
+                    year={year}
+                    rating={mediaData?.vote_average}
+                    runtime={mediaData?.runtime}
+                    overview={mediaData?.overview}
                 />
-              ) : (
-                <div className="w-full h-full bg-muted/30 flex items-center justify-center">
-                  <span className="text-muted-foreground">No Poster</span>
+            </div>
+
+            {/* Main Content - Movie Layout */}
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column - Poster & Info */}
+                    <div className="space-y-6">
+                        <div className="relative aspect-[2/3] rounded-xl overflow-hidden">
+                            <img
+                                src={`https://image.tmdb.org/t/p/w500${mediaData?.poster_path}`}
+                                alt={title}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded flex items-center gap-1">
+                                <span className="text-yellow-400">★</span>
+                                <span className="text-white text-sm font-medium">{mediaData?.vote_average?.toFixed(1)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <h2 className="text-xl font-bold text-white">{title}</h2>
+                            <p className="text-sm text-gray-400">{year} • {mediaData?.runtime}m</p>
+                            <div className="flex flex-wrap gap-2">
+                                {mediaData?.genres?.map((genre: any) => (
+                                    <span key={genre.id} className="px-2 py-1 text-xs bg-zinc-800 rounded-full text-gray-300">
+                                        {genre.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                                📖 Synopsis
+                            </h3>
+                            <p className="text-sm text-gray-400 leading-relaxed">{mediaData?.overview}</p>
+                        </div>
+                    </div>
+
+                    {/* Middle Column - Stream Sources & Details */}
+                    <div className="space-y-6">
+                        {/* Stream Sources Card */}
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                    ⚙️ Stream Sources
+                                </h3>
+                                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Streaming</span>
+                            </div>
+
+                            <div className="space-y-3">
+                                <span className="text-sm text-gray-400">Provider Source:</span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button className="px-3 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground">
+                                        ProfMilo V1
+                                    </button>
+                                    <button className="px-3 py-2 rounded-lg text-sm font-medium bg-zinc-800 text-gray-400 hover:bg-zinc-700">
+                                        ProfMilo V2
+                                    </button>
+                                    <button className="px-3 py-2 rounded-lg text-sm font-medium bg-zinc-800 text-gray-400 hover:bg-zinc-700">
+                                        ProfMilo V3
+                                    </button>
+                                    <button className="px-3 py-2 rounded-lg text-sm font-medium bg-zinc-800 text-gray-400 hover:bg-zinc-700">
+                                        ProfMilo 4K
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-800 text-gray-300 text-sm">
+                                    ⬇️ Download Movie
+                                </button>
+                                <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-800 text-gray-300 text-sm">
+                                    ▶️ Direct Player
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-400">Current source:</span>
+                                <span className="text-white">ProfMilo V1 <span className="text-xs bg-zinc-700 px-2 py-0.5 rounded ml-1">HLS</span></span>
+                            </div>
+                        </div>
+
+                        {/* Details Card */}
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
+                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                📋 Details
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span className="text-gray-500">Release Date</span>
+                                    <p className="text-white">{mediaData?.release_date}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Runtime</span>
+                                    <p className="text-white">{mediaData?.runtime}m</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Status</span>
+                                    <p className="text-white">{mediaData?.status}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Language</span>
+                                    <p className="text-white">{mediaData?.original_language?.toUpperCase()}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column - Production */}
+                    <div className="space-y-6">
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4">
+                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                🏢 Production
+                            </h3>
+
+                            {mediaData?.production_companies?.length > 0 && (
+                                <div className="space-y-2">
+                                    <span className="text-sm text-gray-500">Companies</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {mediaData.production_companies.slice(0, 4).map((company: any) => (
+                                            <span key={company.id} className="text-xs px-2 py-1 bg-zinc-800 rounded text-gray-300">
+                                                {company.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <span className="text-sm text-gray-500">Status</span>
+                                <p className="text-sm text-white">{mediaData?.status}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <span className="text-sm text-gray-500">Countries</span>
+                                <p className="text-sm text-white">
+                                    {mediaData?.production_countries?.map((c: any) => c.name).join(', ')}
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <span className="text-sm text-gray-500">Languages</span>
+                                <p className="text-sm text-white">
+                                    {mediaData?.spoken_languages?.map((l: any) => l.english_name).join(', ')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              )}
-              {/* Rating Badge */}
-              <div className="absolute bottom-3 left-3">
-                <div className="flex items-center gap-1 px-2 py-1 rounded bg-black/80 backdrop-blur-sm">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-semibold text-white">
-                    {data.vote_average.toFixed(1)}
-                  </span>
-                </div>
-              </div>
+
+                {/* Similar Movies */}
+                {similarData.results?.length > 0 && (
+                    <div className="mt-12">
+                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            ❤️ You May Also Like
+                        </h3>
+                        <div className="flex gap-4 overflow-x-auto pb-4">
+                            {similarData.results.slice(0, 10).map((item: any) => (
+                                <a
+                                    key={item.id}
+                                    href={`/movie/${item.id}`}
+                                    className="flex-shrink-0 w-32 group"
+                                >
+                                    <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-2">
+                                        <img
+                                            src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                        />
+                                        <div className="absolute top-1 right-1 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded text-xs text-white flex items-center gap-0.5">
+                                            <span className="text-yellow-400">★</span>
+                                            {item.vote_average?.toFixed(1)}
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-white truncate">{item.title}</p>
+                                    <p className="text-xs text-gray-500">{item.release_date?.substring(0, 4)}</p>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
-
-            {/* Title & Meta */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-xl font-bold">{displayTitle}</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {year} • {runtime > 0 && `${Math.floor(runtime / 60)}h ${runtime % 60}m`}
-              </p>
-            </div>
-
-            {/* Genres */}
-            {data.genres && data.genres.length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                {data.genres.map((genre) => (
-                  <span
-                    key={genre.id}
-                    className="px-3 py-1 rounded-full bg-muted/50 text-xs font-medium"
-                  >
-                    {genre.name}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Tagline */}
-            {data.tagline && (
-              <p className="text-sm italic text-muted-foreground text-center lg:text-left">
-                "{data.tagline}"
-              </p>
-            )}
-
-            {/* Synopsis */}
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Synopsis</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {data.overview || "No synopsis available."}
-              </p>
-            </div>
-          </div>
-
-          {/* Right Column - Stream Sources & Details */}
-          <div className="lg:col-span-9 space-y-8">
-            {/* Stream Sources */}
-            <div className="p-6 rounded-xl border border-white/5 bg-card/50">
-              <StreamSources
-                movieId={id}
-                movieTitle={displayTitle}
-                isTV={isTV}
-                season={season}
-                episode={episode}
-              />
-            </div>
-
-            {/* Details & Production */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-xl border border-white/5 bg-card/50">
-                <MovieDetails
-                  releaseDate={data.release_date || data.first_air_date}
-                  runtime={runtime}
-                  language={language}
-                  status={data.status}
-                  budget={data.budget}
-                  revenue={data.revenue}
-                />
-              </div>
-              <div className="p-6 rounded-xl border border-white/5 bg-card/50">
-                <MovieDetails
-                  productionCompanies={data.production_companies}
-                  productionCountries={data.production_countries}
-                  spokenLanguages={data.spoken_languages}
-                />
-              </div>
-            </div>
-
-            {/* Similar Movies */}
-            {similarItems.length > 0 && (
-              <div className="p-6 rounded-xl border border-white/5 bg-card/50">
-                <SimilarMovies items={similarItems} mediaType={mediaType} />
-              </div>
-            )}
-          </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

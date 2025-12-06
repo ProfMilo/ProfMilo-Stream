@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import CollectionHero from "../../components/feature/CollectionHero";
 import CollectionContent from "../../components/feature/CollectionContent";
-import Footer from "../../components/layout/Footer";
 
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -31,7 +30,6 @@ export default async function CollectionDetailsPage(props: Props) {
         <div className="min-h-screen bg-background">
             <CollectionHero collection={collection} />
             <CollectionContent parts={collection.parts} />
-            <Footer />
         </div>
     );
 }

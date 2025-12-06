@@ -19,7 +19,11 @@ interface HeroSectionProps {
     first_air_date?: string;
     genre_ids: number[];
     media_type: 'movie' | 'tv';
+    logo_path?: string;
   }>;
+  showArrows?: boolean;
+  showPosters?: boolean;
+  enableAutoTransition?: boolean;
 }
 
 const genreMap: { [key: number]: string } = {
@@ -32,7 +36,7 @@ const genreMap: { [key: number]: string } = {
   10766: 'Soap', 10767: 'Talk', 10768: 'War & Politics'
 };
 
-export default function HeroSection({ featuredMovies }: HeroSectionProps) {
+export default function HeroSection({ featuredMovies, showArrows = true, showPosters = true, enableAutoTransition = true }: HeroSectionProps) {
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -60,6 +64,8 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
   }, []);
 
   useEffect(() => {
+    if (!enableAutoTransition) return;
+
     const interval = setInterval(() => {
       if (!isTransitioning && !isInitialLoad) {
         setIsTransitioning(true);
@@ -74,7 +80,7 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [featuredMovies.length, isTransitioning, isInitialLoad]);
+  }, [featuredMovies.length, isTransitioning, isInitialLoad, enableAutoTransition]);
 
   const handleMovieSelect = (index: number) => {
     if (index !== currentMovieIndex && !isTransitioning && !isInitialLoad) {
@@ -103,7 +109,7 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
   };
 
   return (
-    <section id="hero" className="relative h-screen w-full overflow-hidden">
+    <section id="hero" className="relative h-screen w-full overflow-hidden -mt-12">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
@@ -134,26 +140,30 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
       </div>
 
       {/* Navigation Arrows */}
-      <div className="absolute inset-y-0 left-0 z-20 flex items-center">
-        <button
-          onClick={handlePreviousMovie}
-          className={`ml-4 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
-            }`}
-          disabled={isTransitioning || isInitialLoad}
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-      </div>
-      <div className="absolute inset-y-0 right-0 z-20 flex items-center">
-        <button
-          onClick={handleNextMovie}
-          className={`mr-4 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
-            }`}
-          disabled={isTransitioning || isInitialLoad}
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
-      </div>
+      {showArrows && (
+        <>
+          <div className="absolute inset-y-0 left-0 z-20 flex items-center">
+            <button
+              onClick={handlePreviousMovie}
+              className={`ml-4 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
+                }`}
+              disabled={isTransitioning || isInitialLoad}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          </div>
+          <div className="absolute inset-y-0 right-0 z-20 flex items-center">
+            <button
+              onClick={handleNextMovie}
+              className={`mr-4 p-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 hover:border-white/40 transition-all duration-300 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
+                }`}
+              disabled={isTransitioning || isInitialLoad}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Main Content */}
       <div className={`relative z-10 flex h-full items-end pb-16 lg:items-center lg:pb-0 transition-opacity duration-700 ${isInitialLoad ? 'opacity-0' : 'opacity-100'
@@ -174,10 +184,20 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
               </div>
             </div>
 
-            {/* Movie Title (large text) */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-2xl">
-              {title}
-            </h1>
+            {/* Movie Title - Logo or Text */}
+            {currentMovie.logo_path ? (
+              <div className="max-w-md lg:max-w-lg">
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${currentMovie.logo_path}`}
+                  alt={title}
+                  className="h-auto max-h-24 md:max-h-32 lg:max-h-40 w-auto object-contain drop-shadow-2xl"
+                />
+              </div>
+            ) : (
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-2xl">
+                {title}
+              </h1>
+            )}
 
             {/* Rating, Year, Genre Badges */}
             <div className="flex flex-wrap items-center gap-1.5 md:gap-2 lg:gap-3">
@@ -231,46 +251,48 @@ export default function HeroSection({ featuredMovies }: HeroSectionProps) {
           </div>
 
           {/* Right Column - Stacked Poster Cards */}
-          <div className="hidden lg:col-span-5 lg:flex lg:items-center lg:justify-end">
-            <div className="relative mr-8" style={{ width: '320px', height: '400px' }}>
-              {/* Current Movie Poster */}
-              <div
-                className={`absolute overflow-hidden rounded-lg border-2 border-white/20 shadow-2xl transition-all duration-500 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-                  }`}
-                style={{ width: '280px', height: '400px', zIndex: 2, top: 0, left: 0 }}
-              >
-                {currentMovie.poster_path && (
-                  <img
-                    src={`https://image.tmdb.org/t/p/w500${currentMovie.poster_path}`}
-                    alt={title}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
+          {showPosters && (
+            <div className="hidden lg:col-span-5 lg:flex lg:items-center lg:justify-end">
+              <div className="relative mr-8" style={{ width: '320px', height: '400px' }}>
+                {/* Current Movie Poster */}
+                <div
+                  className={`absolute overflow-hidden rounded-lg border-2 border-white/20 shadow-2xl transition-all duration-500 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                    }`}
+                  style={{ width: '280px', height: '400px', zIndex: 2, top: 0, left: 0 }}
+                >
+                  {currentMovie.poster_path && (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w500${currentMovie.poster_path}`}
+                      alt={title}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
 
-              {/* Next Movie Poster (behind) */}
-              <div
-                className="absolute overflow-hidden rounded-lg border-2 border-white/10 shadow-xl transition-all duration-500 ease-out"
-                style={{
-                  width: '280px',
-                  height: '400px',
-                  zIndex: 1,
-                  top: '20px',
-                  left: '0px',
-                  transform: 'translateX(32px) scale(0.9)',
-                  opacity: 0.7
-                }}
-              >
-                {nextMovie?.poster_path && (
-                  <img
-                    src={`https://image.tmdb.org/t/p/w500${nextMovie.poster_path}`}
-                    alt={nextMovie.title || nextMovie.name || ''}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+                {/* Next Movie Poster (behind) */}
+                <div
+                  className="absolute overflow-hidden rounded-lg border-2 border-white/10 shadow-xl transition-all duration-500 ease-out"
+                  style={{
+                    width: '280px',
+                    height: '400px',
+                    zIndex: 1,
+                    top: '20px',
+                    left: '0px',
+                    transform: 'translateX(32px) scale(0.9)',
+                    opacity: 0.7
+                  }}
+                >
+                  {nextMovie?.poster_path && (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w500${nextMovie.poster_path}`}
+                      alt={nextMovie.title || nextMovie.name || ''}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

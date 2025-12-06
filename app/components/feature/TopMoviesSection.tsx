@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Star } from 'lucide-react';
 
 interface TopMoviesSectionProps {
   movies: Array<{
@@ -70,9 +70,12 @@ export default function TopMoviesSection({ movies }: TopMoviesSectionProps) {
                   </div>
                 </div>
 
-                {/* Rating */}
-                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-semibold px-2 py-1 rounded">
-                  {movie.vote_average?.toFixed(1) || 'N/A'}
+                {/* Rating Badge */}
+                <div className="absolute top-2 right-2 z-10">
+                  <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md">
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    <span className="text-white text-xs font-bold">{movie.vote_average?.toFixed(1) || 'N/A'}</span>
+                  </div>
                 </div>
               </div>
 

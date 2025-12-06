@@ -1,61 +1,102 @@
 import CollectionGrid from "../components/feature/CollectionGrid";
-import Footer from "../components/layout/Footer";
 
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 
-// Curated list of collection IDs to match the design
-const COLLECTION_IDS = [
-    10,     // Star Wars
-    2190,   // Indiana Jones
-    119,    // Lord of the Rings
-    263,    // Three Colors
-    1575,   // Star Trek: The Original Series
-    230,    // The Godfather
-    264,    // The Dark Knight
-    238,    // Back to the Future
-    295,    // Pirates of the Caribbean
-    9737,   // Ocean's
-    328,    // Jurassic Park
-    135934, // Predator
-    2150,   // Chronicles of Narnia
-    2284,   // Cube
-    4003,   // Sissi
-    33514,  // Shaft
-    528,    // Terminator
-    529,    // Wallace & Gromit
-    556,    // Spider-Man
-    645     // James Bond
-];
-
-async function getCollectionDetails(id: number) {
+async function getTopRatedMovies(page: number = 1) {
     try {
-        const res = await fetch(`${BASE_URL}/collection/${id}?api_key=${API_KEY}`, { next: { revalidate: 3600 } });
+        const res = await fetch(
+            `${BASE_URL}/movie/top_rated?api_key=${API_KEY}&page=${page}`,
+            { next: { revalidate: 3600 } }
+        );
+        if (!res.ok) return { results: [], total_pages: 0 };
+        return res.json();
+    } catch (error) {
+        console.error('Failed to fetch top rated movies', error);
+        return { results: [], total_pages: 0 };
+    }
+}
+
+async function getMovieDetails(movieId: number) {
+    try {
+        const res = await fetch(
+            `${BASE_URL}/movie/${movieId}?api_key=${API_KEY}`,
+            { next: { revalidate: 3600 } }
+        );
         if (!res.ok) return null;
         return res.json();
     } catch (error) {
-        console.error(`Failed to fetch collection ${id}`, error);
         return null;
     }
 }
 
-export default async function CollectionPage() {
-    let collectionsResults: any[] = [];
-
+async function getCollectionDetails(collectionId: number) {
     try {
-        const collectionsPromises = COLLECTION_IDS.map(id => getCollectionDetails(id));
-        collectionsResults = await Promise.all(collectionsPromises);
+        const res = await fetch(
+            `${BASE_URL}/collection/${collectionId}?api_key=${API_KEY}`,
+            { next: { revalidate: 3600 } }
+        );
+        if (!res.ok) return null;
+        return res.json();
     } catch (error) {
-        console.error('Failed to fetch collections', error);
+        return null;
+    }
+}
+
+async function searchCollections(query: string, page: number = 1) {
+    try {
+        const res = await fetch(
+            `${BASE_URL}/search/collection?api_key=${API_KEY}&query=${encodeURIComponent(query)}&page=${page}`,
+            { next: { revalidate: 3600 } }
+        );
+        if (!res.ok) return { results: [], total_pages: 0, total_results: 0 };
+        return res.json();
+    } catch (error) {
+        return { results: [], total_pages: 0, total_results: 0 };
+    }
+}
+
+export default async function CollectionPage() {
+    // Get collections from top rated movies (sorted by rating)
+    const seenCollectionIds = new Set<number>();
+    const collections: any[] = [];
+
+    // Fetch multiple pages of top rated movies to get enough collections
+    for (let page = 1; page <= 5 && collections.length < 20; page++) {
+        const topRatedMovies = await getTopRatedMovies(page);
+
+        // Get movie details and extract collection info
+        const movieDetailsPromises = (topRatedMovies.results || []).map((movie: any) =>
+            getMovieDetails(movie.id)
+        );
+        const moviesWithDetails = await Promise.all(movieDetailsPromises);
+
+        // Extract unique collections
+        for (const movie of moviesWithDetails) {
+            if (movie?.belongs_to_collection && !seenCollectionIds.has(movie.belongs_to_collection.id)) {
+                seenCollectionIds.add(movie.belongs_to_collection.id);
+
+                // Get full collection details (with parts)
+                const collectionDetails = await getCollectionDetails(movie.belongs_to_collection.id);
+                if (collectionDetails) {
+                    collections.push(collectionDetails);
+                }
+
+                if (collections.length >= 20) break;
+            }
+        }
     }
 
-    // Filter out any failed fetches
-    const collections = collectionsResults.filter(c => c !== null);
+    // Get total count from search API for stats (use 'a' for broader results)
+    const searchData = await searchCollections('a', 1);
 
     return (
         <div className="min-h-screen bg-background">
-            <CollectionGrid collections={collections} />
-            <Footer />
+            <CollectionGrid
+                initialCollections={collections}
+                initialTotalPages={Math.min(searchData.total_pages || 347, 500)}
+                initialTotalResults={searchData.total_results || 6928}
+            />
         </div>
     );
 }
